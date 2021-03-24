@@ -7,6 +7,7 @@ A [developer account](https://developer.twitter.com/) is needed to create a proj
 ```
 python3 -m venv .
 source bin/activate
+pip3 install --upgrade pip
 pip3 install json2html requests
 ```
 
@@ -31,26 +32,28 @@ Last index (`last_index_str`) saves the latest `id_str` from a previous query. T
 
 ### Usage
 ```
-usage: savemylikes.py [-h] [-d] [-v] [-g <User ID> | -p <User ID>]
+usage: savemylikes.py [-h] [-v] [-V] [-g <User ID> | -p <User ID> | -c <User ID>]
 
-Consumes Twitter API to retrieve the liked tweets in an incremental fashion, version 2.0, build 20200909.
+Consumes Twitter API to retrieve the liked tweets incrementally, version 2.3, build 20210324.
 
 optional arguments:
   -h, --help            show this help message and exit
-  -d, --debug           Print extended information
-  -v, --version         show program's version number and exit
+  -v, --verbose         Print extended information
+  -V, --Version         show program's version number and exit
   -g <User ID>, --get <User ID>
                         User ID or Twitter handle (w/o @)
   -p <User ID>, --print <User ID>
-                        Print local archive to screen
+                        Pretty print local JSON archive to screen
+  -c <User ID>, --convert <User ID>
+                        Convert local JSON archive to HTML
 ```
 
 ### Error codes
-10: no arguments
-20: wrong user ID / config file not found
-30: user ID is an empty string
-40: local archive not found
-50: empty Bearer token
-60: archive directory not found
-255: HTTP error
+10: no arguments</br>
+20: wrong user ID / config file not found</br>
+30: user ID is an empty string</br>
+40: local archive not found</br>
+50: empty Bearer token</br>
+60: archive directory not found</br>
+255: HTTP error</br>
 
