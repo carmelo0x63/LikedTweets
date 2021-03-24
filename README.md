@@ -7,7 +7,7 @@ A [developer account](https://developer.twitter.com/) is needed to create a proj
 ```
 python3 -m venv .
 source bin/activate
-pip3 install requests
+pip3 install json2html requests
 ```
 
 ### Configuration
@@ -51,5 +51,6 @@ optional arguments:
 30: user ID is an empty string
 40: local archive not found
 50: empty Bearer token
+60: archive directory not found
 255: HTTP error
 
