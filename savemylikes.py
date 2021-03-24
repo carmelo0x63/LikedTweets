@@ -23,11 +23,11 @@ from json2html import *        # Python wrapper for JSON to HTML-Table convertor
 # Global settings
 __version__ = '2.3'
 __build__ = '20210324'
-apientrypoint = 'https://api.twitter.com/1.1/favorites/list.json'
-maxcount = 200
-tweet_mode = "extended"
-url_base = apientrypoint + '?count=' + str(maxcount) + '&tweet_mode=' + tweet_mode
-timestamp = datetime.now().strftime('%Y-%m-%d-%H')
+APIENTRYPOINT = 'https://api.twitter.com/1.1/favorites/list.json'
+MAXCOUNT = 200
+TWEET_MODE = "extended"
+BASEURL = APIENTRYPOINT + '?count=' + str(MAXCOUNT) + '&tweet_mode=' + TWEET_MODE
+TIMESTAMP = datetime.now().strftime('%Y-%m-%d-%H')
 ARCHIVEDIR = '_archive'
 
 """
@@ -41,14 +41,14 @@ def read_conf(name):
     try:
         with open(name + '_config.json', 'r') as config_in:
             config_json = json.load(config_in)
-        if is_verbose: print('[+] Config file found for ' + name)
+        if ISVERBOSE: print('[+] Config file found for ' + name)
         if config_json['BEARER'] == '':
             print('[-] Bearer token empty!')
             print('[-] Quitting!', end = '\n\n')
             sys.exit(50)  # ERROR: empty Bearer token
         else:
-            if is_verbose: print('[+] Bearer token found!')
-        if is_verbose:
+            if ISVERBOSE: print('[+] Bearer token found!')
+        if ISVERBOSE:
             beautify_last_index_str = config_json['last_index_str'] or 'EMPTY'
             beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
             print('[+] Last index is: ' + beautify_last_index_str)
@@ -64,7 +64,7 @@ update_conf() updates the external configuration file with the last fetched valu
 Incremental API requests must comply with "since_id = last_index_str".
 """
 def update_conf(config_json, name, new_index_str):
-    config_json.update(last_index_str = new_index_str, last_timestamp = timestamp)
+    config_json.update(last_index_str = new_index_str, last_timestamp = TIMESTAMP)
     with open(name + '_config.json', 'w') as config_out:
         json.dump(config_json, config_out)
 
@@ -110,29 +110,29 @@ def dump_json(response_json, name, old_ts):
     if old_ts == '':
         old_ts = 'EMPTY'
 
-    if is_verbose:
+    if ISVERBOSE:
         print('[+] Saving raw incremental data file for ' + name)
-        print('[+] New file: ' + name + '_twitter_likes_' + timestamp + '.json')
+        print('[+] New file: ' + name + '_twitter_likes_' + TIMESTAMP + '.json')
 
     try:
         with open(name + '_twitter_likes_' + old_ts + '.json', 'r') as previous_in:
             previous_json = json.load(previous_in)
             print('[+] Records (previous): ' + str(len(previous_json)))
     except FileNotFoundError:
-        if is_verbose:
+        if ISVERBOSE:
             print('[!] Starting from an empty archive')
         previous_json = []
 
-    if old_ts != timestamp:
+    if old_ts != TIMESTAMP:
         archive_file(name, old_ts)
 
     new_json = response_json + previous_json
     print('[+] Records (new): ' + str(len(new_json)))
 
-    with open(name + '_twitter_likes_' + timestamp + '.json', 'w') as response_out:
+    with open(name + '_twitter_likes_' + TIMESTAMP + '.json', 'w') as response_out:
         json.dump(new_json, response_out)
-    if is_verbose:
-        print('[+] New file: ' + name + '_twitter_likes_' + timestamp + '.json saved to disk')
+    if ISVERBOSE:
+        print('[+] New file: ' + name + '_twitter_likes_' + TIMESTAMP + '.json saved to disk')
 
 """
 convert_all() converts the raw JSON file into a table-based HTML file
@@ -154,10 +154,10 @@ def convert_all(tweets_json, name, old_ts):
 
     index_out = json2html.convert(json = tweets_json_out)
 
-    with open(name + '_index_' + timestamp + '.html', 'w') as html_out:
+    with open(name + '_index_' + TIMESTAMP + '.html', 'w') as html_out:
         html_out.write(index_out)
-    if is_verbose:
-        print('[+] New file: ' + name + '_index_' + timestamp + '.html saved to disk')
+    if ISVERBOSE:
+        print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html saved to disk')
 
 """
 archive_file() obsoletes an old archive by moving the file to ARCHIVEDIR
@@ -168,7 +168,7 @@ def archive_file(name, old_ts):
         if os.path.isfile(file):
           if os.path.isdir(ARCHIVEDIR):
               shutil.move(file, ARCHIVEDIR + '/' + file)
-              if is_verbose:
+              if ISVERBOSE:
                   print('[+] Archived file: ' + file)
           else:
               print('[-] "' + ARCHIVEDIR + '" is not present!')
@@ -198,8 +198,8 @@ def main():
     # First off, read <name>_config.json to fetch where we left off and any tokens
     # Note: "get", "print", and "convert" are mutually exclusive, default = '', user_id is necessarily one of them 
     user_id = args.get + args.print + args.convert
-    global is_verbose
-    is_verbose = args.verbose
+    global ISVERBOSE
+    ISVERBOSE = args.verbose
     if user_id != '':
         config_json = read_conf(user_id)
     else:
@@ -209,7 +209,7 @@ def main():
     # If "print" mutually exclusive option is chosen we take a shortcut here
     if args.print:
         try:
-            if is_verbose: print('[+] Printing local archive for user ' + user_id)
+            if ISVERBOSE: print('[+] Printing local archive for user ' + user_id)
             filename = user_id + '_twitter_likes_' + config_json['last_timestamp'] + '.json'
             with open(filename, 'r') as archive_in:
                 archive_json = json.load(archive_in)
@@ -224,7 +224,7 @@ def main():
     # If "convert" mutually exclusive option is chosen we do the same as with "print"
     if args.convert:
         try:
-            if is_verbose: print('[+] Generating HTML output for user ' + user_id)
+            if ISVERBOSE: print('[+] Generating HTML output for user ' + user_id)
             filename = user_id + '_twitter_likes_' + config_json['last_timestamp'] + '.json'
             with open(filename, 'r') as archive_in:
                 archive_json = json.load(archive_in)
@@ -257,7 +257,7 @@ def main():
         archive_json = []
         is_first = True
         page_num = 1
-        url_first = url_base + '&screen_name=' + user_id
+        url_first = BASEURL + '&screen_name=' + user_id
         while True:
             print('[+] Page N.: ' + str(page_num))
             page_num += 1
@@ -277,19 +277,19 @@ def main():
             except IndexError:
                 print('[+] That was the last page')
                 break
-            if is_verbose:
+            if ISVERBOSE:
                 print('[+] Received ' + str(response_len) + ' items')
                 print('[+] Last ID is: ' + str(last_id))
                 print('[+] Archive length is: ' + str(len(archive_json)))
         # Finally, the in-memory JSON archive is saved to file
         dump_json(archive_json, user_id, config_json['last_timestamp'])
         new_index_str = archive_json[0]['id_str']
-        if is_verbose: print('[+] New last index is: ' + new_index_str)
+        if ISVERBOSE: print('[+] New last index is: ' + new_index_str)
         update_conf(config_json, user_id, new_index_str)
     else:
         # Flavour = "incremental", "since_id" is used set the the value we fetch from the config file
-        url = url_base + '&screen_name=' + user_id + '&since_id=' + config_json['last_index_str']
-        if is_verbose: print('[+] URL: ' + url)  ##DEBUG
+        url = BASEURL + '&screen_name=' + user_id + '&since_id=' + config_json['last_index_str']
+        if ISVERBOSE: print('[+] URL: ' + url)  ##DEBUG
 
         response_json = requests_get(url, headers)
         response_len = len(response_json)
@@ -302,7 +302,7 @@ def main():
 
             # Last step is to update the <name>_config.json file with the current last index
             new_index_str = response_json[0]['id_str']
-            if is_verbose: print('[+] New last index is: ' + new_index_str)
+            if ISVERBOSE: print('[+] New last index is: ' + new_index_str)
             update_conf(config_json, user_id, new_index_str)
         else:
             print('[+] No updates!')
