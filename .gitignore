@@ -133,10 +133,11 @@ dmypy.json
 
 # Bearer token
 *_config.json
+*_config.json.0
 
 *.json
 _archive/
 .DS_Store
-concat_json.txt
-index.html
-
+*.html
+TwitterAPI
+friends.py
