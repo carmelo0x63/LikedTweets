@@ -5,10 +5,13 @@ A [developer account](https://developer.twitter.com/) is needed to create a proj
 
 ### Install
 ```
-python3 -m venv .
-source bin/activate
-pip3 install --upgrade pip
-pip3 install json2html requests
+$ python3 -m venv .
+
+$ source bin/activate
+
+$ pip3 install --upgrade pip
+
+$ pip3 install json2html requests
 ```
 
 ### Configuration

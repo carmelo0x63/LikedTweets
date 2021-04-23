@@ -3,6 +3,7 @@
 # author: Carmelo C
 # email: carmelo.califano@gmail.com
 # history, date format ISO 8601:
+#  2021-04-22  2.4: changed option from -c to -t
 #  2021-03-24  2.3: automatically moves obsolete files to ARCHIVEDIR
 #  2020-10-01  2.2: introduced tweet_mode, convert_all(); expanded print_all()
 #  2020-09-25  2.1: print_all() prints in reverse order
@@ -21,8 +22,8 @@ from datetime import datetime  # Basic date and time types
 from json2html import *        # Python wrapper for JSON to HTML-Table convertor
 
 # Global settings
-__version__ = '2.3'
-__build__ = '20210324'
+__version__ = '2.4'
+__build__ = '20210423'
 APIENTRYPOINT = 'https://api.twitter.com/1.1/favorites/list.json'
 MAXCOUNT = 200
 TWEET_MODE = "extended"
@@ -186,7 +187,7 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-g', '--get', metavar='<User ID>', default='', type=str, help='User ID or Twitter handle (w/o @)')
     group.add_argument('-p', '--print', metavar='<User ID>', default='', type=str, help='Pretty print local JSON archive to screen')
-    group.add_argument('-c', '--convert', metavar='<User ID>', default='', type=str, help='Convert local JSON archive to HTML')
+    group.add_argument('-t', '--tohtml', metavar='<User ID>', default='', type=str, help='Convert local JSON archive to HTML')
 
     # In case of no arguments shows help message
     if len(sys.argv) == 1:
