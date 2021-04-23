@@ -197,8 +197,8 @@ def main():
         args = parser.parse_args() # parse command line
 
     # First off, read <name>_config.json to fetch where we left off and any tokens
-    # Note: "get", "print", and "convert" are mutually exclusive, default = '', user_id is necessarily one of them 
-    user_id = args.get + args.print + args.convert
+    # Note: "get", "print", and "tohtml" are mutually exclusive, default = '', user_id is necessarily one of them 
+    user_id = args.get + args.print + args.tohtml
     global ISVERBOSE
     ISVERBOSE = args.verbose
     if user_id != '':
@@ -222,8 +222,8 @@ def main():
             sys.exit(40)  # ERROR: local archive not found
     # Once "print" is done the script exits in a controlled fashion
 
-    # If "convert" mutually exclusive option is chosen we do the same as with "print"
-    if args.convert:
+    # If "tohtml" mutually exclusive option is chosen we do the same as with "print"
+    if args.tohtml:
         try:
             if ISVERBOSE: print('[+] Generating HTML output for user ' + user_id)
             filename = user_id + '_twitter_likes_' + config_json['last_timestamp'] + '.json'
@@ -235,7 +235,7 @@ def main():
             print('[-] Local archive ' + filename + ' not found')
             print('[-] Quitting!', end = '\n\n')
             sys.exit(40)  # ERROR: local archive not found
-    # Once "convert" is done the script exits in a controlled fashion
+    # Once "tohtml" is done the script exits in a controlled fashion
 
     # The only other possibility is "get", that comes in two flavours:
     # 1. "first": we must query the API starting from the most recent tweets and dig backwards,
