@@ -31,14 +31,14 @@ BASEURL = APIENTRYPOINT + '?count=' + str(MAXCOUNT) + '&tweet_mode=' + TWEET_MOD
 TIMESTAMP = datetime.now().strftime('%Y-%m-%d-%H')
 ARCHIVEDIR = '_archive'
 
-"""
-read_conf() reads the application's configuration from an external file.
-The file is JSON-formatted and contains:
-  the OAuth2 bearer tokens for any users,
-  the last timestamp,
-  the last index where we left off.
-"""
 def read_conf(name):
+    """
+    read_conf() reads the application's configuration from an external file.
+    The file is JSON-formatted and contains:
+      the OAuth2 bearer tokens for any users,
+      the last timestamp,
+      the last index where we left off.
+    """
     try:
         with open(name + '_config.json', 'r') as config_in:
             config_json = json.load(config_in)
@@ -60,19 +60,19 @@ def read_conf(name):
         print('[-] Quitting!', end = '\n\n')
         sys.exit(20)  # ERROR: wrong user ID / config file not found
 
-"""
-update_conf() updates the external configuration file with the last fetched value, "last_index_str".
-Incremental API requests must comply with "since_id = last_index_str".
-"""
 def update_conf(config_json, name, new_index_str):
+    """
+    update_conf() updates the external configuration file with the last fetched value, "last_index_str".
+    Incremental API requests must comply with "since_id = last_index_str".
+    """
     config_json.update(last_index_str = new_index_str, last_timestamp = TIMESTAMP)
     with open(name + '_config.json', 'w') as config_out:
         json.dump(config_json, config_out)
 
-"""
-print_all() displays the local archive in a nicely formatted fashion
-"""
 def print_all(file_json):
+    """
+    print_all() displays the local archive in a nicely formatted fashion
+    """
     for index in range(len(file_json) - 1, -1, -1):
         print('{')
         print('\t"ROW": "' + str(index) + '",')
@@ -88,10 +88,10 @@ def print_all(file_json):
             print('\t"URL": "N/A"')
         print('}', end = '\n\n')
 
-"""
-requests_get() handles the HTTP GET part, depends on 'Requests' external module
-"""
 def requests_get(url, headers):
+    """
+    requests_get() handles the HTTP GET part, depends on 'Requests' external module
+    """
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
@@ -104,10 +104,10 @@ def requests_get(url, headers):
 
     return response.json()
 
-"""
-dump_json() appends any new data 'on top' of the local archive. If no previous local archive is present, we'll just save the contents of our request.
-"""
 def dump_json(response_json, name, old_ts):
+    """
+    dump_json() appends any new data 'on top' of the local archive. If no previous local archive is present, we'll just save the contents of our request.
+    """
     if old_ts == '':
         old_ts = 'EMPTY'
 
@@ -135,10 +135,10 @@ def dump_json(response_json, name, old_ts):
     if ISVERBOSE:
         print('[+] New file: ' + name + '_twitter_likes_' + TIMESTAMP + '.json saved to disk')
 
-"""
-convert_all() converts the raw JSON file into a table-based HTML file
-"""
 def convert_all(tweets_json, name, old_ts):
+    """
+    convert_all() converts the raw JSON file into a table-based HTML file
+    """
     tweets_json_out = []
 
     for index in range(0, len(tweets_json)):
@@ -160,10 +160,10 @@ def convert_all(tweets_json, name, old_ts):
     if ISVERBOSE:
         print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html saved to disk')
 
-"""
-archive_file() obsoletes an old archive by moving the file to ARCHIVEDIR
-"""
 def archive_file(name, old_ts):
+    """
+    archive_file() obsoletes an old archive by moving the file to ARCHIVEDIR
+    """
     files = [name + '_twitter_likes_' + old_ts + '.json', name + '_index_' + old_ts + '.html']
     for file in files:
         if os.path.isfile(file):
@@ -177,10 +177,10 @@ def archive_file(name, old_ts):
         else:
           print('[!] "' + file + '" is not present, skipping!')
 
-"""
-main() handles the input (through argparse), then implements the logic based on the input arguments.
-"""
 def main():
+    """
+    main() handles the input (through argparse), then implements the logic based on the input arguments.
+    """
     parser = argparse.ArgumentParser(description='Consumes Twitter API to retrieve the liked tweets incrementally, version ' + __version__ + ', build ' + __build__ + '.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Print extended information')
     parser.add_argument('-V', '--Version', action='version', version='%(prog)s {version}'.format(version=__version__))
