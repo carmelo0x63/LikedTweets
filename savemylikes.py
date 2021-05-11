@@ -297,7 +297,6 @@ def main():
     else:
         # Flavour = "incremental", "since_id" is used set the the value we fetch from the config file
         url = BASEURL + '&screen_name=' + user_id + '&since_id=' + config_json['last_index_str']
-        if ISVERBOSE: print('[+] URL: ' + url)  ##DEBUG
 
         response_json = requests_get(url, headers)
         response_len = len(response_json)

@@ -9,9 +9,9 @@ $ python3 -m venv .
 
 $ source bin/activate
 
-$ pip3 install --upgrade pip
+$ python3 -m pip install --upgrade pip setuptools wheel
 
-$ pip3 install json2html requests
+$ python3 -m pip install json2html requests
 ```
 
 ### Configuration
@@ -35,9 +35,9 @@ Last index (`last_index_str`) saves the latest `id_str` from a previous query. T
 
 ### Usage
 ```
-usage: savemylikes.py [-h] [-v] [-V] [-g <User ID> | -p <User ID> | -c <User ID>]
+usage: savemylikes.py [-h] [-v] [-V] [-g <User ID> | -p <User ID> | -t <User ID>]
 
-Consumes Twitter API to retrieve the liked tweets incrementally, version 2.3, build 20210324.
+Consumes Twitter API to retrieve the liked tweets incrementally, version 2.5, build 20210511.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -47,7 +47,7 @@ optional arguments:
                         User ID or Twitter handle (w/o @)
   -p <User ID>, --print <User ID>
                         Pretty print local JSON archive to screen
-  -c <User ID>, --convert <User ID>
+  -t <User ID>, --tohtml <User ID>
                         Convert local JSON archive to HTML
 ```
 
