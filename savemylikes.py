@@ -3,6 +3,7 @@
 # author: Carmelo C
 # email: carmelo.califano@gmail.com
 # history, date format ISO 8601:
+#  2021-05-11  2.5: added ability to automatically make links (ln) between HTML files
 #  2021-04-22  2.4: changed option from -c to -t
 #  2021-03-24  2.3: automatically moves obsolete files to ARCHIVEDIR
 #  2020-10-01  2.2: introduced tweet_mode, convert_all(); expanded print_all()
@@ -17,13 +18,14 @@ import json                    # JSON encoder and decoder
 import requests                # HTTP library for Python
 import os                      # Miscellaneous operating system interfaces
 import shutil                  # High-level file operations
+import subprocess              # Subprocess management
 import sys                     # System-specific parameters and functions
 from datetime import datetime  # Basic date and time types
 from json2html import *        # Python wrapper for JSON to HTML-Table convertor
 
 # Global settings
-__version__ = '2.4'
-__build__ = '20210423'
+__version__ = '2.5'
+__build__ = '20210511'
 APIENTRYPOINT = 'https://api.twitter.com/1.1/favorites/list.json'
 MAXCOUNT = 200
 TWEET_MODE = "extended"
@@ -159,6 +161,11 @@ def convert_all(tweets_json, name, old_ts):
         html_out.write(index_out)
     if ISVERBOSE:
         print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html saved to disk')
+
+    subprocess.check_output(['rm', '-f', name + '_index_latest.html'])
+    subprocess.check_output(['ln', name + '_index_' + TIMESTAMP + '.html', name + '_index_latest.html'])
+    if ISVERBOSE:
+        print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html linked to LATEST')
 
 def archive_file(name, old_ts):
     """
