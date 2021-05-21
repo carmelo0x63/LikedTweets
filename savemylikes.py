@@ -142,8 +142,9 @@ def convert_all(tweets_json, name, old_ts):
     convert_all() converts the raw JSON file into a table-based HTML file
     """
     tweets_json_out = []
+    tweets_length = len(tweets_json)
 
-    for index in range(0, len(tweets_json)):
+    for index in range(0, tweets_length):
         tweet = {"ROW": "", "USER INFO": "", "TWEET INFO": "", "FULL TEXT": "", "URL": ""}
         tweet.update({"ROW": index})
         tweet.update({"USER INFO": {"USER_ID": tweets_json[index]['user']['id_str'], "USER_NAME": tweets_json[index]['user']['name'], "USER_HANDLE": tweets_json[index]['user']['screen_name']}})
@@ -159,6 +160,8 @@ def convert_all(tweets_json, name, old_ts):
 
     with open(name + '_index_' + TIMESTAMP + '.html', 'w') as html_out:
         html_out.write(index_out)
+
+    print('[+] Processed: ' + str(tweets_length) + ' records')
     if ISVERBOSE:
         print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html saved to disk')
 
