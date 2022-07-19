@@ -39,19 +39,19 @@ query_params = dict([
 
 def create_url(id):
     """
-    create_url is an URL generator based on v2 endpoint + Twitter user ID
+    create_url is an URL generator based on v2 endpoint + Twitter ID
     """
     url = f'https://api.twitter.com/2/users/{id}/liked_tweets'
     return url
 
 
-def read_conf(name):
+def readConf(name):
     """
-    read_conf() reads the application's configuration from an external file.
+    readConf() reads the application's configuration from an external file.
     The file is JSON-formatted and contains:
-      the OAuth2 bearer tokens for any users,
-      the last timestamp,
-      the last index where we left off.
+    - the twitter ID,
+    - the OAuth2 bearer token,
+    - the last timestamp.
     """
     try:
         with open(name + '_configv2.json', 'r') as config_in:
@@ -63,16 +63,16 @@ def read_conf(name):
             sys.exit(50)  # ERROR: empty Bearer token
         else:
             if ISVERBOSE: print('[+] Bearer token found!')
-#        if ISVERBOSE:
+        if ISVERBOSE:
 #            beautify_last_index_str = config_json['last_index_str'] or 'EMPTY'
-#            beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
+            beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
 #            print('[+] Last index is: ' + beautify_last_index_str)
-#            print('[+] Last timestamp is: ' + beautify_last_timestamp)
+            print('[+] Last timestamp is: ' + beautify_last_timestamp)
         return config_json
     except FileNotFoundError:
         print('[-] Config file not found for ' + name)
         print('[-] Quitting!', end = '\n\n')
-        sys.exit(20)  # ERROR: wrong user ID / config file not found
+        sys.exit(20)  # ERROR: wrong user name / config file not found
 
 
 def connect_to_endpoint(url, bearer_token, query_params):
@@ -87,8 +87,12 @@ def connect_to_endpoint(url, bearer_token, query_params):
     response = requests.request('GET', url, headers = headers, params = query_params)
     if response.status_code != 200:
         print('[-] An error has occurred')
-        print(f"[-] status code = {response.status_code}, text = {response.json()['title']}")
+        print(f'[-] HTTP status code = {response.status_code}')
+        print(f'[-] HTTP reason = {response.reason}')
+        print('[-] Quitting!', end = '\n\n')
         sys.exit(response.status_code)
+    else:
+        if ISVERBOSE: print(f'[+] HTTP status code = {response.status_code}')
     return response.json()
 
 
@@ -113,33 +117,42 @@ def saveData(name, output_json):
         json.dump(output_json, output_file)
 
 
+def updateConf(config_json, name):
+    """
+    updateConf() updates the external configuration file with the last timestamp.
+    """
+    config_json.update(last_timestamp = TIMESTAMP)
+    with open(name + '_configv2.json', 'w') as config_out:
+        json.dump(config_json, config_out)
+
+
 def main():
     """
     main() handles the input (through argparse), then implements the logic based on the input arguments.
     """
-    parser = argparse.ArgumentParser(description='Consumes Twitter API to retrieve the liked tweets incrementally, version ' + __version__ + ', build ' + __build__ + '.')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Print extended information')
-    parser.add_argument('-V', '--Version', action='version', version='%(prog)s {version}'.format(version=__version__))
+    parser = argparse.ArgumentParser(description = 'Consumes Twitter API to retrieve the liked tweets incrementally, version ' + __version__ + ', build ' + __build__ + '.')
+    parser.add_argument('-v', '--verbose', action = 'store_true', help = 'Print extended information')
+    parser.add_argument('-V', '--Version', action = 'version', version = '%(prog)s {version}'.format(version=__version__))
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-g', '--get', metavar='<User ID>', default='', type=str, help='User ID or Twitter handle (w/o @)')
-    group.add_argument('-p', '--print', metavar='<User ID>', default='', type=str, help='Pretty print local JSON archive to screen')
-    group.add_argument('-t', '--tohtml', metavar='<User ID>', default='', type=str, help='Convert local JSON archive to HTML')
+    group.add_argument('-g', '--get', metavar = '<User name>', default = '', type = str, help = 'User name or Twitter handle (w/o @)')
+    group.add_argument('-p', '--print', metavar = '<User name>', default = '', type = str, help = 'Pretty print local JSON archive to screen')
+    group.add_argument('-t', '--tohtml', metavar = '<User name>', default = '', type = str, help = 'Convert local JSON archive to HTML')
 
-    # In case of no arguments shows help message
+    # In case of no arguments help message is shown
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(10)  # ERROR: no arguments
     else:
         args = parser.parse_args() # parse command line
 
-    # First off, read <name>_config.json to fetch where we left off and any tokens
+    # First off, <name>_configv2.json s read to fetch the user's Twitter ID and any tokens
     # Note: "get", "print", and "tohtml" arguments are mutually exclusive,
-    # <User ID>'s default value is the empty string, if <User ID> has a non-empty value it must come from get/print/tohtml
-    user_id = args.get + args.print + args.tohtml
+    # <User name>'s default value is the empty string, if <User name> has a non-empty value it must come from get/print/tohtml
+    twitter_name = args.get + args.print + args.tohtml
     global ISVERBOSE
     ISVERBOSE = args.verbose
-    if user_id != '':
-        config_json = read_conf(user_id)
+    if twitter_name != '':
+        config_json = readConf(twitter_name)
     else:
         print('[-] User ID is empty!', end = '\n\n')
         sys.exit(30)  # ERROR: user ID is an empty string
@@ -147,6 +160,7 @@ def main():
     twitter_id = config_json['twitter_id']
     url = create_url(twitter_id)
     bearer_token = config_json['BEARER']
+    last_timestamp = config_json['last_timestamp']
 
     count = records = 0
     next_token = 'dummy'  ## this is only used once, to trigger the 'while' loop
@@ -189,7 +203,10 @@ def main():
             query_params.update([('pagination_token', next_token)])
 
     if ISVERBOSE: print('[!] Storing liked_tweets to local file')
-    saveData(user_id, output_list)
+    saveData(twitter_name, output_list)
+    if ISVERBOSE: print('[!] Updating config')
+    updateConf(config_json, twitter_name)
+    print('DELETE ' + twitter_name + '_likedtweets_' + last_timestamp + '.json')
 
 
 if __name__ == '__main__':
