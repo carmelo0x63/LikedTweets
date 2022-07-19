@@ -26,9 +26,14 @@ TIMESTAMP = datetime.now().strftime('%Y-%m-%d-%H')
 ARCHIVEDIR = '_archive'
 # Default fields: id, text
 # Additional fields
+expansions = 'author_id'
 tweet_fields = 'author_id,created_at'
+user_fields = 'id,name,username'
 query_params = dict([
-    ('tweet.fields', tweet_fields)
+    ('expansions', expansions),
+    ('tweet.fields', tweet_fields),
+    ('user.fields', user_fields),
+    ('max_results', 5)  ## DEBUG
 ])
 
 
@@ -58,11 +63,11 @@ def read_conf(name):
             sys.exit(50)  # ERROR: empty Bearer token
         else:
             if ISVERBOSE: print('[+] Bearer token found!')
-        if ISVERBOSE:
-            beautify_last_index_str = config_json['last_index_str'] or 'EMPTY'
-            beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
-            print('[+] Last index is: ' + beautify_last_index_str)
-            print('[+] Last timestamp is: ' + beautify_last_timestamp)
+#        if ISVERBOSE:
+#            beautify_last_index_str = config_json['last_index_str'] or 'EMPTY'
+#            beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
+#            print('[+] Last index is: ' + beautify_last_index_str)
+#            print('[+] Last timestamp is: ' + beautify_last_timestamp)
         return config_json
     except FileNotFoundError:
         print('[-] Config file not found for ' + name)
@@ -70,24 +75,42 @@ def read_conf(name):
         sys.exit(20)  # ERROR: wrong user ID / config file not found
 
 
-#def bearer_oauth(r):
-#    """
-#    bearer_oauth() builds up the necessary OAuth headers
-#    """
-#    r.headers["Authorization"] = f'Bearer {bearer_token}'
-#    r.headers["User-Agent"] = 'v2LikedTweetsPython'
-#    return r
-
-
 def connect_to_endpoint(url, bearer_token, query_params):
+    """
+    connect_to_endpoint() consumes Twitter v2 API "liked_tweets" endpoint. The response, once converted to JSON,
+    consists of the following keys:
+    - data: type = list of dicts, each element contains the fundamental info about the tweet
+    - includes: type = dict, optional, its contents depends on the chosen expansion(s)
+    - meta: type = dict, contains useful info such as result_count, next_token, previous_token
+    """
     headers = {'Authorization': f'Bearer {bearer_token}'}
     response = requests.request('GET', url, headers = headers, params = query_params)
     if response.status_code != 200:
         print('[-] An error has occurred')
         print(f"[-] status code = {response.status_code}, text = {response.json()['title']}")
         sys.exit(response.status_code)
-
     return response.json()
+
+
+def mergeExpansions(data_json, includes_json):
+    """
+    mergeExpansion() parses 'response_json' for returned tweets, it searches the 'include' key to match 'tweet/author_id' and 'users/id'.
+    Once that's done, it merges both dictionaries into one record comprised of:
+    - id, text (from 'data', default values)
+    - author_id, created_at (from 'data', optional values as per 'tweet.fields')
+    - name, username (from 'includes', defined by 'expansions')
+    """
+    for tweet in data_json:
+        author = tweet['author_id']
+        for user in includes_json:
+            if user['id'] == author:
+                tweet.update({'author_name': user['name'], 'author_handle': user['username']})
+    return data_json
+
+
+def saveData(name, output_json):
+    with open(name + '_likedtweets_' + TIMESTAMP + '.json', 'w') as output_file:
+        json.dump(output_json, output_file)
 
 
 def main():
@@ -125,27 +148,48 @@ def main():
     url = create_url(twitter_id)
     bearer_token = config_json['BEARER']
 
-    count = 0
-    next_token = 'empty'
+    count = records = 0
+    next_token = 'dummy'  ## this is only used once, to trigger the 'while' loop
+    output_list = []
     while next_token:
         count += 1
         response_json = connect_to_endpoint(url, bearer_token, query_params)
-        print('Iteration = ' + str(count), 'next_token = \'' + next_token + '\'')
+        if ISVERBOSE: print('[!] Iteration = ' + str(count) + ', next_token = \'' + next_token + '\'')
 
         result_count = response_json['meta']['result_count']
-        print('fetched ' + str(result_count) + ' records')
+        if ISVERBOSE: print('[!] Fetched ' + str(result_count) + ' records')
+        records += result_count
+        if ISVERBOSE: print('[!] Partial count: ' + str(records) + ' records thus far...')
 
         if result_count == 0:
-            print('[!] No data returned')
-            print('[!] You\'ve reached the last page')
+            if ISVERBOSE:
+                print('[!] No data returned')
+                print('[!] Last page reached')
+            print('[+] Operation completed, fetched ' + str(records) + ' records')
             break
         else:
-            print('data length = ' + str(len(response_json['data'])))
-            print('data[0] = ' + str(response_json['data'][0]))
-            print('...')
-            print('meta = ' + str(response_json['meta']), end = '\n\n')
+            if ISVERBOSE:
+                print('data: ')
+                print(response_json['data'])
+                print('includes: ')
+                print(response_json['includes']['users'], end = '\n\n')
+
+            merged_json = mergeExpansions(response_json['data'], response_json['includes']['users'])
+            if ISVERBOSE:
+                print('merged data: ')
+                print(merged_json, end = '\n\n')
+
+            output_list += merged_json
+            if ISVERBOSE:
+                print('data length = ' + str(len(response_json['data'])))
+                print('current output len = ' + str(len(output_list)))
+                print('meta = ' + str(response_json['meta']), end = '\n\n')
+
             next_token = response_json['meta']['next_token']
             query_params.update([('pagination_token', next_token)])
+
+    if ISVERBOSE: print('[!] Storing liked_tweets to local file')
+    saveData(user_id, output_list)
 
 
 if __name__ == '__main__':
