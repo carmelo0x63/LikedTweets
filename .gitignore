@@ -132,8 +132,8 @@ dmypy.json
 .pyre/
 
 # Bearer token
-*_config.json
-*_config.json.0
+*_config*.json
+*_config*.json.0
 
 *.json
 _archive/
