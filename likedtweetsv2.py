@@ -24,7 +24,7 @@ ARCHIVEDIR = '_archive'
 # Default fields: id, text
 # Additional fields
 expansions = 'author_id'
-tweet_fields = 'author_id,created_at'
+tweet_fields = 'author_id,created_at,entities'
 user_fields = 'id,name,username'
 query_params = dict([
     ('expansions', expansions),
@@ -161,7 +161,7 @@ def convert2HTML(tweets_json, name, old_ts):
         tweet.update({"TWEET INFO": {"TWEET_ID": tweets_json[index]['id'], "TWEET_DATE": tweets_json[index]['created_at']}})
         tweet.update({"FULL TEXT": tweets_json[index]['text']})
         try:
-            tweet.update({"URL": tweets_json[index]['url']})
+            tweet.update({"URL": tweets_json[index]['entities']['urls'][0]['expanded_url']})
         except:
             tweet.update({"URL": "N/A"})
         tweets_json_out.append(tweet)
