@@ -1,6 +1,6 @@
-### LikedTweets
-#### Save Twitter likes to a local JSON file, also convert the list to handy HTML for easy browsing.
-The script is based on Twitter API v2 [GET /2/users/:id/liked_tweets](https://developer.twitter.com/en/docs/twitter-api/tweets/likes/api-reference/get-users-id-liked_tweets) entrypoint.</br>
+### LikeHistory
+#### Save Twitter likes to a local JSON file.
+The script is based on Twitter API [GET favorites/list](https://developer.twitter.com/en/docs/twitter-api/v1/tweets/post-and-engage/api-reference/get-favorites-list) entrypoint.</br>
 A [developer account](https://developer.twitter.com/) is needed to create a project/application and the related credentials.</br>
 
 ### Install
@@ -15,25 +15,27 @@ $ python3 -m pip install json2html requests
 ```
 
 ### Configuration
-The operation of the script is based on a configuration file, also in JSON format. The file is named `<user_id>_configv2.json` and contains the following information:</br>
-1. Twitter ID, e.g. "1234567890"</br>
-2. Bearer token, e.g. "AAAxMjwkf... UYAVhca"</br>
-3. last timestamp, e.g. "2020-01-01-10"</br>
-See `user_configv2.json.txt` for an example.
+The operation of the script is based on a configuration file, also in JSON format. The file is named `<user_id>_config.json` and contains the following information:</br>
+1 Bearer token, e.g. "AAAxMjwkf... UYAVhca"</br>
+2 last timestamp, e.g. "2020-01-01-10"</br>
+3 last index, e.g. "1924542778424577816"
+See `config.json.txt` for an example.
 
-#### 1. Twitter ID
-This is the unique identifies associated to your Twitter username/handle.
+#### 1. Bearer token
+`OAuth 2.0 Bearer Token authenticates requests on behalf of your developer App. As this method is specific to the App, it does not involve any users. This method is typically for developers that need read-only access to public information.`</br>
+source: https://developer.twitter.com/en/docs/authentication/oauth-2-0
 
-#### 2. Bearer token
-From [Authentication](https://developer.twitter.com/en/docs/authentication/oauth-2-0), "OAuth 2.0 Bearer Token authenticates requests on behalf of your developer App. As this method is specific to the App, it does not involve any users. This method is typically for developers that need read-only access to public information."</br>
-
-#### 3. last timestamp
+#### 2. last timestamp
 The timestamp (format: %Y-%m-%d-%H) associated to the last time the script ran. Last timestamp (`last_timestamp`) is also a pointer to the file containing the latest archive.</br>
+**NOTE**: when setting up the application for the first time use the initial value: "" (empty string)
+
+#### 3. last index
+Last index (`last_index_str`) saves the latest `id_str` from a previous query. This value is used to generate the next query in an incremental fashion, e.g. `since_id = last_index_str`.</br>
 **NOTE**: when setting up the application for the first time use the initial value: "" (empty string)
 
 ### Usage
 ```
-usage: likedtweetsv2.py [-h] [-v] [-V] [-g <User ID> | -p <User ID> | -t <User ID>]
+usage: savemylikes.py [-h] [-v] [-V] [-g <User ID> | -p <User ID> | -t <User ID>]
 
 Consumes Twitter API to retrieve the liked tweets incrementally, version 2.5, build 20210511.
 
@@ -56,5 +58,5 @@ optional arguments:
 40: local archive not found</br>
 50: empty Bearer token</br>
 60: archive directory not found</br>
-??: when an HTTP error occurs, the application simply reflects the received HTTP status code</br>
+255: HTTP error</br>
 
