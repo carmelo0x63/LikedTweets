@@ -8,9 +8,9 @@
 # External modules/dependencies
 import argparse                # Parser for command-line options, arguments and sub-commands
 import json                    # JSON encoder and decoder
-import requests                # HTTP library for Python
 import os                      # Miscellaneous operating system interfaces
-#import shutil                  # High-level file operations
+import requests                # HTTP library for Python
+import shutil                  # High-level file operations
 import subprocess              # Subprocess management
 import sys                     # System-specific parameters and functions
 from datetime import datetime  # Basic date and time types
@@ -19,9 +19,6 @@ from json2html import *        # Python wrapper for JSON to HTML-Table convertor
 # Global settings
 __version__ = '3.0'
 __build__ = '20220804'
-#MAXCOUNT = 200
-#TWEET_MODE = "extended"
-#BASEURL = APIENTRYPOINT + '?count=' + str(MAXCOUNT) + '&tweet_mode=' + TWEET_MODE
 TIMESTAMP = datetime.now().strftime('%Y-%m-%d-%H')
 ARCHIVEDIR = '_archive'
 # Default fields: id, text
@@ -33,7 +30,7 @@ query_params = dict([
     ('expansions', expansions),
     ('tweet.fields', tweet_fields),
     ('user.fields', user_fields),
-    ('max_results', 5)  ## DEBUG, comment out in final version
+#    ('max_results', 5)  ## DEBUG, comment out in final version
 ])
 
 
@@ -68,9 +65,7 @@ def readConf(name):
         else:
             if ISVERBOSE: print('[+] Bearer token found!')
         if ISVERBOSE:
-#            beautify_last_index_str = config_json['last_index_str'] or 'EMPTY'
             beautify_last_timestamp = config_json['last_timestamp'] or 'EMPTY'
-#            print('[+] Last index is: ' + beautify_last_index_str)
             print('[+] Last timestamp is: ' + beautify_last_timestamp)
         return config_json
     except FileNotFoundError:
@@ -79,9 +74,9 @@ def readConf(name):
         sys.exit(20)  # ERROR: wrong user name / config file not found
 
 
-def connect_to_endpoint(url, bearer_token, query_params):
+def connect2Endpoint(url, bearer_token, query_params):
     """
-    connect_to_endpoint() consumes Twitter v2 API "liked_tweets" endpoint. The response, once converted to JSON,
+    connect2Endpoint() consumes Twitter v2 API "liked_tweets" endpoint. The response, once converted to JSON,
     consists of the following keys:
     - data (list of dicts): each element contains the fundamental info about the tweet
     - includes (dict): optional, its contents depends on the chosen expansion(s)
@@ -130,6 +125,7 @@ def saveData(name, output_json):
     - name (string): Twitter username
     - output_json (list): list of tweets containing both 'data' and 'includes'
     """
+    if ISVERBOSE: print('[!] Storing liked_tweets to local file')
     with open(name + '_likedtweets_' + TIMESTAMP + '.json', 'w') as output_file:
         json.dump(output_json, output_file)
 
@@ -141,6 +137,7 @@ def updateConf(name, config_json):
     - config_json (dict): contents of the configuration file
     - name (string): Twitter user name
     """
+    if ISVERBOSE: print('[!] Updating configuration file')
     config_json.update(last_timestamp = TIMESTAMP)
     with open(name + '_configv2.json', 'w') as config_out:
         json.dump(config_json, config_out)
@@ -150,9 +147,9 @@ def convert2HTML(tweets_json, name, old_ts):
     """
     convert2HTML() converts the JSON file into a table-based HTML file
     Args:
-    - tweets_json (dict): 
-    - name (string): 
-    - old_ts (string): 
+    - tweets_json (list): list of tweets
+    - name (string): Twitter user name
+    - old_ts (string): previously saved timestamp
     """
     tweets_json_out = []
     tweets_length = len(tweets_json)
@@ -174,7 +171,7 @@ def convert2HTML(tweets_json, name, old_ts):
     with open(name + '_index_' + TIMESTAMP + '.html', 'w') as html_out:
         html_out.write(index_out)
 
-    print('[+] Processed: ' + str(tweets_length) + ' records')
+    print('[+] Conversion to HTML done, processed ' + str(tweets_length) + ' records')
     if ISVERBOSE:
         print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html saved to disk')
 
@@ -182,6 +179,28 @@ def convert2HTML(tweets_json, name, old_ts):
     subprocess.check_output(['ln', name + '_index_' + TIMESTAMP + '.html', name + '_index_latest.html'])
     if ISVERBOSE:
         print('[+] New file: ' + name + '_index_' + TIMESTAMP + '.html linked to LATEST')
+
+
+def archiveFile(name, old_ts):
+    """
+    archiveFile() obsoletes old files by moving them to ARCHIVEDIR
+    Args:
+    - name (string): Twitter user name
+    - old_ts (string): previously saved timestamp
+    """
+    if ISVERBOSE: print('[!] Archiving obsolete files')
+    files = [name + '_likedtweets_' + old_ts + '.json', name + '_index_' + old_ts + '.html']
+    for file in files:
+        if os.path.isfile(file):
+            if os.path.isdir(ARCHIVEDIR):
+                shutil.move(file, ARCHIVEDIR + '/' + file)
+                if ISVERBOSE:
+                    print('[+] Archived file: ' + file)
+            else:
+                print('[-] "' + ARCHIVEDIR + '" is not present!')
+                sys.exit(60)  # ERROR: archive directory not found
+        else:
+            print('[!] "' + file + '" is not present, skipping!')
 
 
 def main():
@@ -250,8 +269,8 @@ def main():
     output_list = []
     while next_token:
         count += 1
-        response_json = connect_to_endpoint(url, bearer_token, query_params)
-        if ISVERBOSE: print('[!] Iteration = ' + str(count) + ', next_token = \'' + next_token + '\'')
+        response_json = connect2Endpoint(url, bearer_token, query_params)
+        if ISVERBOSE: print('[!] Iteration = ' + str(count) + ' with next_token = \'' + next_token + '\'')
 
         result_count = response_json['meta']['result_count']
         if ISVERBOSE: print('[!] Fetched ' + str(result_count) + ' records')
@@ -286,12 +305,10 @@ def main():
             query_params.update([('pagination_token', next_token)])
 
     # Finally, some manipulation occurs of the output files
-    if ISVERBOSE: print('[!] Storing liked_tweets to local file')
     saveData(twitter_name, output_list)
-    if ISVERBOSE: print('[!] Updating config')
     updateConf(twitter_name, config_json)
-    print('DELETE ' + twitter_name + '_likedtweets_' + last_timestamp + '.json')
-
+    if last_timestamp != TIMESTAMP:
+        archiveFile(twitter_name, last_timestamp or 'EMPTY')
 
 if __name__ == '__main__':
     main()
