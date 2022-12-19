@@ -243,6 +243,13 @@ def main():
     bearer_token = config_json['BEARER']
     last_timestamp = config_json['last_timestamp']
 
+    if last_timestamp != '':
+        with open(twitter_name + '_likedtweets_' + last_timestamp + '.json', 'r') as last_file:
+            input_json = json.load(last_file)
+            last_length = len(input_json)
+    else:
+        last_length = 0
+
     # If "tohtml" mutually exclusive option is chosen we do the same as with "print"
     if args.tohtml:
         try:
@@ -282,6 +289,7 @@ def main():
                 print('[!] No data returned')
                 print('[!] Last page reached')
             print('[+] Operation completed, fetched ' + str(records) + ' records')
+            print('[+] Acquired ' + str(records - last_length) + ' new records')
             break
         else:
             if ISVERBOSE:
